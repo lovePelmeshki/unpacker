@@ -140,6 +140,5 @@ def is_archive(file_path):
 
 if __name__ == "__main__":
     root_folder = r"D:\logs\add\Daily_Checks_20241003104622\InfoCollect\d18k-pair651m"  # Здесь укажите путь к папке с архивами
-    #extract_to = r"D:\logs\add\Daily_Checks_20241003104622\InfoCollect\d18k-pair651m"  # Здесь укажите путь, куда извлекать архивы
     unpack_all_archives_in_folder(root_folder)
 
