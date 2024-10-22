@@ -8,7 +8,7 @@ import ctypes
 from ctypes import wintypes
 
 # Логирование для удобства отладки
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -23,6 +23,7 @@ def extract_7z(archive_path, extract_to):
     with py7zr.SevenZipFile(archive_path, mode="r") as archive:
         archive.extractall(extract_path)
         logger.debug(f"Successfully extracted {archive_path} to {extract_path}")
+        logger.info(f"Successfully extracted: {archive_path}")
 
 
 def extract_zip(archive_path, extract_to):
@@ -33,7 +34,7 @@ def extract_zip(archive_path, extract_to):
     with zipfile.ZipFile(archive_path, "r") as archive:
         archive.extractall(extract_path)
         logger.debug(f"Successfully extracted {archive_path} to {extract_path}")
-
+        logger.info(f"Successfully extracted: {archive_path}")
 
 def extract_tgz(archive_path, extract_to):
     logger.debug(f"extract_tgz({archive_path}, {extract_to})")
@@ -44,7 +45,7 @@ def extract_tgz(archive_path, extract_to):
     with tarfile.open(archive_path, "r:gz") as archive:
         archive.extractall(extract_path)
         logger.debug(f"Successfully extracted {archive_path} to {extract_path}")
-
+        logger.info(f"Successfully extracted: {archive_path}")
 
 def extract_tar_bz2(archive_path, extract_to):
     logger.debug(f"extract_tar_bz2({archive_path}, {extract_to})")
@@ -55,7 +56,7 @@ def extract_tar_bz2(archive_path, extract_to):
     with tarfile.open(archive_path, "r:bz2") as archive:
         archive.extractall(extract_path)
         logger.debug(f"Successfully extracted {archive_path} to {extract_path}")
-
+        logger.info(f"Successfully extracted: {archive_path}")
 
 def extract_archive(archive_path, extract_to):
 
@@ -86,8 +87,6 @@ def extract_archive(archive_path, extract_to):
     finally:
         if final_exception != "":
             logger.warning(f"Extraction FAILED: {archive_path}")
-            print(f"Extraction FAILED: {archive_path}. Reason: {final_exception}")
-
 
 # проверить, существует ли папка с именем basefolder. Если да - изменить имя
 def ensure_unique_folder(base_folder):
@@ -124,10 +123,11 @@ def unpack_all_archives_in_folder(folder_path):
                     try:
                         # Удаляем файл архива стандартным методом
                         os.remove(file_path)
-                        logger.debug(f"Deleted archive: {file_path}")
+                        logger.info(f"Deleted archive: {file_path}")
                     except PermissionError:
-                        logger.warning(f"Standard delete failed for {file_path}. Trying force delete.")
+                        logger.debug(f"Standard delete failed for {file_path}. Trying force delete.")
                         force_delete(file_path)
+                        logger.info(f"Deleted archive: {file_path}")
                     except Exception as e:
                         logger.error(f"Failed to delete archive {file_path}: {e}")
                     # После распаковки, проверяем, есть ли вложенные архивы
@@ -197,6 +197,7 @@ def delete_all_archives_recursively(folder_path):
 if __name__ == "__main__":
     # root_folder = r"D:\logs\add\Daily_Checks_20241003104622\InfoCollect\d18k-pair651m"  # Здесь укажите путь к папке с архивами
     # root_folder = r"E:\logs\examples\pair651m\pair651m\InfoCollect\10.101.50.206_2102353RVC10MC100017"  # Здесь укажите путь к папке с архивами
+    root_folder = input()
     root_folder = r"E:\logs\pair651m\pair651m\InfoCollect\10.101.50.206_2102353RVC10MC100017\Data_OceanStorDorado18000V6_20241021112919_2102353RVC10MC100017"  # Здесь укажите путь к папке с архивами
     unpack_all_archives_in_folder(root_folder)
     #delete_all_archives_recursively(root_folder)
