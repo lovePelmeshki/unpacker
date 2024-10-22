@@ -4,7 +4,8 @@ import tarfile
 import zipfile
 import logging
 import py7zr
-
+import ctypes
+from ctypes import wintypes
 
 # Логирование для удобства отладки
 logging.basicConfig(level=logging.DEBUG)
@@ -120,12 +121,19 @@ def unpack_all_archives_in_folder(folder_path):
                 try:
                     # Распаковываем архив
                     extract_archive(file_path, root)
-
+                    try:
+                        # Удаляем файл архива стандартным методом
+                        os.remove(file_path)
+                        logger.debug(f"Deleted archive: {file_path}")
+                    except PermissionError:
+                        logger.warning(f"Standard delete failed for {file_path}. Trying force delete.")
+                        force_delete(file_path)
+                    except Exception as e:
+                        logger.error(f"Failed to delete archive {file_path}: {e}")
                     # После распаковки, проверяем, есть ли вложенные архивы
                     new_extracted_folder = os.path.splitext(file_path)[0]
                     if os.path.isdir(new_extracted_folder):
                         unpack_all_archives_in_folder(new_extracted_folder)
-
                 except Exception as e:
                     logger.error(f"Error extracting archive {file_path}: {e}")
 
@@ -134,11 +142,63 @@ def is_archive(file_path):
     """
     Проверяет, является ли файл архивом по его расширению.
     """
-    archive_extensions = ['.7z', '.zip', '.tar.gz', '.tgz', '.bz2', '.tar', '.tbz']
-    return any(file_path.lower().endswith(ext) for ext in archive_extensions)
+    archive_extensions = ['.7z', '.zip', '.tar.gz', '.tgz', '.bz2', '.tar', '.tbz', 'log.tar', '.gz']
+    return os.path.isfile(file_path) and any(file_path.lower().endswith(ext) for ext in archive_extensions)
+
+
+def force_delete(file_path):
+    # Принудительное удаление с помощью Windows API
+    FILE_ATTRIBUTE_NORMAL = 0x80
+    INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF
+    DeleteFile = ctypes.windll.kernel32.DeleteFileW
+    SetFileAttributes = ctypes.windll.kernel32.SetFileAttributesW
+
+    # Убираем атрибуты файла, если они могут мешать удалению
+    SetFileAttributes.argtypes = [wintypes.LPCWSTR, wintypes.DWORD]
+    SetFileAttributes.restype = wintypes.BOOL
+    DeleteFile.argtypes = [wintypes.LPCWSTR]
+    DeleteFile.restype = wintypes.BOOL
+
+    # Убираем атрибуты "Только для чтения" и удаляем файл
+    if not SetFileAttributes(file_path, FILE_ATTRIBUTE_NORMAL):
+        logger.error(f"Failed to change attributes of {file_path}")
+        return
+
+    if not DeleteFile(file_path):
+        logger.error(f"Failed to force delete {file_path}")
+    else:
+        logger.debug(f"Force deleted archive: {file_path}")
+
+
+def delete_all_archives_recursively(folder_path):
+    """
+       Рекурсивно удаляет все архивы в указанной папке и её подпапках.
+       """
+    logger.debug(f"Checking folder for archives: {folder_path}")
+
+    # Проходим по всем файлам и подпапкам в указанной директории
+    for root, dirs, files in os.walk(folder_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+
+            # Проверяем, является ли файл архивом
+            if is_archive(file_path):
+                try:
+                    # Удаляем файл архива стандартным методом
+                    os.remove(file_path)
+                    logger.debug(f"Deleted archive: {file_path}")
+                except PermissionError:
+                    logger.warning(f"Standard delete failed for {file_path}. Trying force delete.")
+                    force_delete(file_path)
+                except Exception as e:
+                    logger.error(f"Failed to delete archive {file_path}: {e}")
 
 
 if __name__ == "__main__":
-    root_folder = r"D:\logs\add\Daily_Checks_20241003104622\InfoCollect\d18k-pair651m"  # Здесь укажите путь к папке с архивами
+    # root_folder = r"D:\logs\add\Daily_Checks_20241003104622\InfoCollect\d18k-pair651m"  # Здесь укажите путь к папке с архивами
+    # root_folder = r"E:\logs\examples\pair651m\pair651m\InfoCollect\10.101.50.206_2102353RVC10MC100017"  # Здесь укажите путь к папке с архивами
+    root_folder = r"E:\logs\pair651m\pair651m\InfoCollect\10.101.50.206_2102353RVC10MC100017\Data_OceanStorDorado18000V6_20241021112919_2102353RVC10MC100017"  # Здесь укажите путь к папке с архивами
     unpack_all_archives_in_folder(root_folder)
+    #delete_all_archives_recursively(root_folder)
+
 
