@@ -195,10 +195,7 @@ def delete_all_archives_recursively(folder_path):
 
 
 if __name__ == "__main__":
-    # root_folder = r"D:\logs\add\Daily_Checks_20241003104622\InfoCollect\d18k-pair651m"  # Здесь укажите путь к папке с архивами
-    # root_folder = r"E:\logs\examples\pair651m\pair651m\InfoCollect\10.101.50.206_2102353RVC10MC100017"  # Здесь укажите путь к папке с архивами
-    root_folder = input()
-    root_folder = r"E:\logs\pair651m\pair651m\InfoCollect\10.101.50.206_2102353RVC10MC100017\Data_OceanStorDorado18000V6_20241021112919_2102353RVC10MC100017"  # Здесь укажите путь к папке с архивами
+    root_folder = input("Enter folder path: ")
     unpack_all_archives_in_folder(root_folder)
     #delete_all_archives_recursively(root_folder)
 
